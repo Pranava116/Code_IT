@@ -1,10 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
-import dynamic from "next/dynamic";
+import EditorWrapper from "@/components/EditorWrapper";
 import Sidebar from "@/components/Sidebar";
-
-const Editor = dynamic(() => import("@/components/Editor"), { ssr: false });
 
 export default async function EditorPage({ params }: { params: Promise<{ nodeId: string }> }) {
   const { nodeId } = await params;
@@ -31,7 +29,7 @@ export default async function EditorPage({ params }: { params: Promise<{ nodeId:
             <p style={{ color: "var(--text-secondary)", marginBottom: "2rem" }}>
               Changes are synced in real-time. Share the URL to collaborate!
             </p>
-            <Editor documentId={nodeId} userName={session.user?.name || "Anonymous"} />
+            <EditorWrapper documentId={nodeId} userName={session.user?.name || "Anonymous"} />
           </div>
         </div>
       </main>
