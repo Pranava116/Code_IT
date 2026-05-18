@@ -1,7 +1,9 @@
 const { Server } = require("@hocuspocus/server");
 const { PrismaClient } = require("@prisma/client");
 const Y = require("yjs");
-
+const fs = require("fs");
+const path = require("path");
+const { getProjectFiles } = require("./utils");
 const prisma = new PrismaClient();
 
 const server = new Server({
@@ -47,6 +49,28 @@ const server = new Server({
           content: base64State,
         },
       });
+
+      // Sync to terminal workspace
+      try {
+        const node = await prisma.node.findUnique({ where: { id: data.documentName } });
+        if (node) {
+          const files = await getProjectFiles(node.projectId);
+          const file = files.find(f => f.node.id === node.id);
+          if (file) {
+            const workspaceDir = path.join(process.cwd(), ".workspaces", node.projectId);
+            const fullFilePath = path.join(workspaceDir, file.fullPath);
+            const text = data.document.getText("monaco").toString();
+            
+            // Ensure directory exists
+            fs.mkdirSync(path.dirname(fullFilePath), { recursive: true });
+            // Write file
+            fs.writeFileSync(fullFilePath, text);
+          }
+        }
+      } catch (syncError) {
+        console.error("Error syncing to terminal workspace:", syncError);
+      }
+
       console.log(`Saved snapshot for document ${data.documentName}`);
     } catch (error) {
       console.error("Error saving document to DB:", error);

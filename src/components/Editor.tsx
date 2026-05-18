@@ -71,7 +71,7 @@ export default function CollaborativeEditor({ documentId, userName }: EditorProp
   }
 
   return (
-    <div style={{ height: "600px", border: "1px solid var(--border)", borderRadius: "8px", overflow: "hidden" }}>
+    <div style={{ height: "100%", border: "1px solid var(--border)", borderRadius: "8px", overflow: "hidden" }}>
       <Editor
         height="100%"
         defaultLanguage="typescript"
