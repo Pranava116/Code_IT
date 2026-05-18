@@ -25,7 +25,8 @@ const server = new Server({
       });
 
       if (latestVersion && latestVersion.content) {
-        const uint8Array = Buffer.from(latestVersion.content, "base64");
+        const buffer = Buffer.from(latestVersion.content, "base64");
+        const uint8Array = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
         Y.applyUpdate(data.document, uint8Array);
       }
     } catch (error) {
