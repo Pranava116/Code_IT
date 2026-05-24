@@ -10,6 +10,13 @@ export default async function HistoryPage({ params }: { params: Promise<{ nodeId
   const session = await getServerSession(authOptions);
   if (!session) redirect("/auth/signin");
 
+  const node = await prisma.node.findUnique({
+    where: { id: nodeId },
+    select: { projectId: true }
+  });
+
+  if (!node) redirect("/");
+
   const versions = await prisma.documentVersion.findMany({
     where: { nodeId },
     orderBy: { createdAt: 'desc' },
@@ -17,7 +24,7 @@ export default async function HistoryPage({ params }: { params: Promise<{ nodeId
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar projectId={node.projectId} />
       <main className="main-content">
         <header className="top-nav">
           <div style={{ fontWeight: 600 }}>Version History</div>

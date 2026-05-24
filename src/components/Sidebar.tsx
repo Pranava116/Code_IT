@@ -13,28 +13,26 @@ interface Node {
   projectId: string;
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  projectId: string;
+}
+
+export default function Sidebar({ projectId }: SidebarProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const [nodes, setNodes] = useState<Node[]>([]);
-  const [projectId, setProjectId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!projectId) return;
     const fetchTree = async () => {
-      const initRes = await fetch("/api/init-workspace", { method: "POST" });
-      if (initRes.ok) {
-        const project = await initRes.json();
-        setProjectId(project.id);
-        
-        const nodesRes = await fetch(`/api/nodes?projectId=${project.id}`);
-        if (nodesRes.ok) {
-          const data = await nodesRes.json();
-          setNodes(data);
-        }
+      const nodesRes = await fetch(`/api/nodes?projectId=${projectId}`);
+      if (nodesRes.ok) {
+        const data = await nodesRes.json();
+        setNodes(data);
       }
     };
     fetchTree();
-  }, []);
+  }, [projectId]);
 
   const createNode = async (parentId: string | null, type: "file" | "folder") => {
     if (!projectId) return;
@@ -51,7 +49,7 @@ export default function Sidebar() {
       const newNode = await res.json();
       setNodes([...nodes, newNode]);
       if (type === "file") {
-        router.push(`/editor/${newNode.id}`);
+        router.push(`/project/${projectId}?file=${newNode.id}`);
       }
     }
   };
@@ -68,7 +66,7 @@ export default function Sidebar() {
                 {n.name}
               </span>
             ) : (
-              <Link href={`/editor/${n.id}`} style={{ color: "var(--text-secondary)", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Link href={`/project/${projectId}?file=${n.id}`} style={{ color: "var(--text-secondary)", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 {n.name}
               </Link>
@@ -93,7 +91,7 @@ export default function Sidebar() {
       </div>
       <div className="sidebar-content" style={{ paddingTop: "1rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", fontWeight: 600, fontSize: "0.75rem", letterSpacing: "1px" }}>
-          <div>PERSONAL WORKSPACE</div>
+          <div>PROJECT FILES</div>
           <div style={{ display: "flex", gap: "8px" }}>
              <button onClick={() => createNode(null, "file")} title="New File at Root" style={btnStyle}>📄</button>
              <button onClick={() => createNode(null, "folder")} title="New Folder at Root" style={btnStyle}>📂</button>
@@ -105,7 +103,9 @@ export default function Sidebar() {
         </div>
       </div>
       <div style={{ padding: "1rem", borderTop: "1px solid var(--border)" }}>
-        <button className="btn-primary" onClick={() => signOut()}>Sign Out</button>
+        <Link href="/" style={{ display: "block", textAlign: "center", textDecoration: "none", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
+          Back to Dashboard
+        </Link>
       </div>
     </aside>
   );

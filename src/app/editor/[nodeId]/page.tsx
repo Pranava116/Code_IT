@@ -26,7 +26,7 @@ export default async function EditorPage({ params }: { params: Promise<{ nodeId:
   
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar projectId={node.projectId} />
       <main className="main-content">
         <header className="top-nav">
           <div style={{ fontWeight: 600 }}>Code It</div>
