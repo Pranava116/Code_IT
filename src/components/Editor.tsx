@@ -22,7 +22,7 @@ export default function CollaborativeEditor({ documentId, userName }: EditorProp
     setYdoc(doc);
     
     const newProvider = new HocuspocusProvider({
-      url: "ws://127.0.0.1:1234",
+      url: typeof window !== "undefined" ? `ws://${window.location.hostname}:1234` : "ws://127.0.0.1:1234",
       name: documentId,
       document: doc,
       token: userName,

@@ -63,12 +63,45 @@ wss.on("connection", async (ws, req) => {
     ws.send(`Error syncing files: ${error.message}\r\n`);
   }
 
-  const ptyProcess = pty.spawn(shell, [], {
+  let command = shell;
+  let args = [];
+  let cwd = workspaceDir;
+  let env = { ...process.env };
+  
+  if (os.platform() !== "win32") {
+    // Bubblewrap isolation for Linux
+    command = "bwrap";
+    args = [
+      "--ro-bind", "/usr", "/usr",
+      "--symlink", "usr/bin", "/bin",
+      "--symlink", "usr/lib", "/lib",
+      "--symlink", "usr/lib64", "/lib64",
+      "--ro-bind", "/etc", "/etc",
+      "--dev", "/dev",
+      "--proc", "/proc",
+      "--bind", workspaceDir, "/workspace",
+      "--chdir", "/workspace",
+      "--unshare-all",
+      "--share-net"
+    ];
+    
+    // Bind NVM directory if it exists to allow node/npm to work
+    const nvmDir = path.join(os.homedir(), ".nvm");
+    if (fs.existsSync(nvmDir)) {
+      args.push("--ro-bind", nvmDir, nvmDir);
+    }
+    
+    args.push("bash");
+    env.HOME = "/workspace";
+    env.PWD = "/workspace";
+  }
+
+  const ptyProcess = pty.spawn(command, args, {
     name: "xterm-color",
     cols: 80,
     rows: 30,
     cwd: workspaceDir,
-    env: process.env,
+    env: env,
   });
 
   ptyProcess.onData((data) => {

@@ -61,7 +61,7 @@ export default async function ProjectPage({
                   <span style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>Changes are synced in real-time</span>
                 </div>
                 <div style={{ flex: 1, overflow: "hidden" }}>
-                  <EditorWrapper documentId={nodeId} userName={session.user?.name || "Anonymous"} />
+                  <EditorWrapper key={nodeId} documentId={nodeId} userName={session.user?.name || "Anonymous"} />
                 </div>
               </>
             ) : (
