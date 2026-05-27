@@ -28,17 +28,23 @@ wss.on("connection", async (ws, req) => {
   const workspaceDir = path.join(process.cwd(), ".workspaces", projectId);
   fs.mkdirSync(workspaceDir, { recursive: true });
 
+  // Create a .bashrc in the workspace to set the prompt
+  fs.writeFileSync(
+    path.join(workspaceDir, ".bashrc"),
+    "export PS1='\\[\\e[1;34m\\]\\w\\[\\e[0m\\] $ '\n"
+  );
+
   // Sync files from DB
   try {
     const files = await getProjectFiles(projectId);
-    
+
     for (const file of files) {
       if (file.node.type === "folder") {
         fs.mkdirSync(path.join(workspaceDir, file.fullPath), { recursive: true });
       } else {
         // It's a file
         fs.mkdirSync(path.dirname(path.join(workspaceDir, file.fullPath)), { recursive: true });
-        
+
         const latestVersion = await prisma.documentVersion.findFirst({
           where: { nodeId: file.node.id },
           orderBy: { createdAt: "desc" },
@@ -50,7 +56,7 @@ wss.on("connection", async (ws, req) => {
           const ydoc = new Y.Doc();
           Y.applyUpdate(ydoc, uint8Array);
           const text = ydoc.getText("monaco").toString();
-          
+
           fs.writeFileSync(path.join(workspaceDir, file.fullPath), text);
         } else {
           // Empty file
@@ -67,7 +73,7 @@ wss.on("connection", async (ws, req) => {
   let args = [];
   let cwd = workspaceDir;
   let env = { ...process.env };
-  
+
   if (os.platform() !== "win32") {
     // Bubblewrap isolation for Linux
     command = "bwrap";
@@ -84,14 +90,14 @@ wss.on("connection", async (ws, req) => {
       "--unshare-all",
       "--share-net"
     ];
-    
+
     // Bind NVM directory if it exists to allow node/npm to work
     const nvmDir = path.join(os.homedir(), ".nvm");
     if (fs.existsSync(nvmDir)) {
       args.push("--ro-bind", nvmDir, nvmDir);
     }
-    
-    args.push("bash");
+
+    args.push("bash", "--rcfile", "/workspace/.bashrc");
     env.HOME = "/workspace";
     env.PWD = "/workspace";
   }
